@@ -14,17 +14,35 @@ function addJob (req, res) {
 
 function getJob (req, res) {
 	postId = req.params.id;
-	job = this.getJob(postId);
-	res.send({
-		id: postId,
-		progress: job.progress()
-	});
+	const job = this.getJob(postId)
+
+	if (job !== undefined) {
+		const progress = job.isCancelled() ? 100 : job.progress();
+		res.send({
+			id: postId,
+			progress: progress
+		});
+	} else {
+		res.status(404).send("Not found");
+	}
+}
+
+function cancelJob (req, res) {
+	postId = req.params.id;
+	const job = this.getJob(postId);
+
+	if (job !== undefined) {
+		res.send(!job.isCancelled());
+	} else {
+		res.status(404).send("Not found");
+	}
 }
 
 module.exports = function(app, port, cluster) {
 	app.get('/status', getStatus.bind(cluster));
 	app.post('/jobs', addJob.bind(cluster));
 	app.get('/jobs/:id', getJob.bind(cluster))
+	app.delete('/jobs/:id', cancelJob.bind(cluster))
 
 	app.listen(port, () => console.log(`Cluster webserver listening at http://localhost:${port}`));
 

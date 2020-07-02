@@ -35,6 +35,7 @@ function batchJob(jobType, jobId, host, nonce, totalSize, batchSize) {
 		failed: []
 	};
 
+	let cancelled = false;
 	let finished = false;
 	let loadingBatch = false;
 
@@ -186,12 +187,15 @@ function batchJob(jobType, jobId, host, nonce, totalSize, batchSize) {
 				if (postId) {
 					worker.process.send(['id', postId]);
 				}
-
 			});
 		},
 		
 		cancel: function() {
+			cancelled = true;
+		},
 
+		isCancelled: function() {
+			return cancelled;
 		}
 	};
 
@@ -214,6 +218,13 @@ function startWebServer() {
 
 		getJob: function(jobId) {
 			return jobs[jobId];
+		},
+
+		cancelJob: function(jobId) {
+			const job = jobs[jobId];
+			if (job !== undefined) {
+				job.cancel();
+			}
 		}
 	};
 
