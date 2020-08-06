@@ -1,5 +1,5 @@
 function getStatus (req, res) {
-  res.send({message: `Online! Cluster running at ${this.pid}`}) ;
+    res.send({message: `Online! Cluster running at ${this.pid}`}) ;
 }
 
 function addJob (req, res) {
@@ -22,16 +22,16 @@ function getJob (req, res) {
             job.hasErred()    ? 'erred'     :
                                 'running';
 
-     const progress = job.progress();
+        const progress = job.progress();
 
-     res.send({
-         id: postId,
-         progress: progress,
-         status: status
-     });
- } else {
-  res.status(404).send("Not found");
-}
+        res.send({
+            id: postId,
+            progress: progress,
+            status: status
+        });
+    } else {
+        res.status(404).send("Not found");
+    }
 }
 
 function cancelJob (req, res) {
