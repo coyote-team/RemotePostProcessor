@@ -32,7 +32,7 @@ const axios	= require('axios');
 		try {
 			response = await axios.get(host, { params: {
 				action: action,
-				nonce: nonce,
+				_ajax_nonce: nonce,
 				post_id: postId
 			}});
 			self.send(['response', ['success', postId]]);

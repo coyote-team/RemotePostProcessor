@@ -36,6 +36,7 @@ function batchJob(jobType, jobId, host, nonce, totalSize, batchSize) {
 	};
 
 	let cancelled = false;
+	let erred = false;
 	let finished = false;
 	let loadingBatch = false;
 
@@ -70,6 +71,12 @@ function batchJob(jobType, jobId, host, nonce, totalSize, batchSize) {
 
 		console.debug("Loading next batch");
 
+		if (cancelled) {
+			console.debug("Job cancelled, not loading batch");
+			loadingBatch = false;
+			return [];
+		}
+
 		let action = jobType === 'process'
 			? 'coyote_load_process_batch'
 			: 'coyote_load_restore_batch'
@@ -78,7 +85,7 @@ function batchJob(jobType, jobId, host, nonce, totalSize, batchSize) {
 		try {
 			response = await axios.get(host, {
 				params: {
-					nonce: nonce,
+					_ajax_nonce: nonce,
 					action: action,
 					size: batchSize 
 				}
@@ -91,6 +98,7 @@ function batchJob(jobType, jobId, host, nonce, totalSize, batchSize) {
 			response = response.data.ids;
 		} catch (error) {
 			console.debug(['Unexpected response while loading batch', error]);
+			erred = true;
 			response = [];
 		} finally {
 			loadingBatch = false;
@@ -109,6 +117,12 @@ function batchJob(jobType, jobId, host, nonce, totalSize, batchSize) {
 
 			const batch = await loadNextBatch();
 
+			if (batch === undefined) {
+				console.error('Batch undefined, halting');
+				finished = true;
+				return;
+			}
+
 			if (!batch.length) {
 				finished = true;
 				return;
@@ -120,6 +134,8 @@ function batchJob(jobType, jobId, host, nonce, totalSize, batchSize) {
 	}
 
 	const job = {
+		id: jobId,
+
 		progress: function() {
 			processed = ids.success.length + ids.skipped.length + ids.failed.length;
 			return parseInt((processed / totalSize) * 100);
@@ -136,7 +152,7 @@ function batchJob(jobType, jobId, host, nonce, totalSize, batchSize) {
 					let [type, payload] = message;
 
 					if (type === TYPE_REQUEST) {
-						if (finished) {
+						if (finished || cancelled) {
 							this.kill();
 							return;
 						}
@@ -196,6 +212,10 @@ function batchJob(jobType, jobId, host, nonce, totalSize, batchSize) {
 
 		isCancelled: function() {
 			return cancelled;
+		},
+
+		hasErred: function () {
+			return erred;
 		}
 	};
 
