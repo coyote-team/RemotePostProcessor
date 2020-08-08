@@ -1,33 +1,25 @@
 function getStatus (req, res) {
-    res.send({message: `Online! Cluster running at ${this.pid}`}) ;
+    res.send({message: `Online! Cluster running at pid ${this.pid}`}) ;
 }
 
-function addJob (req, res) {
-    postId = this.addJob(
-        req.body.action,
+async function addJob (req, res) {
+    const jobId = await this.addJob(
         req.body.host,
         req.body.nonce,
         req.body.batchSize,
        );
-    res.send({id: postId});
+    res.send({id: jobId});
 }
 
 function getJob (req, res) {
-    postId = req.params.id;
-    const job = this.getJob(postId)
+    const jobId = req.params.id;
+    const job = this.getJob(jobId)
 
     if (job !== undefined) {
-        const status = 
-            job.isCancelled() ? 'cancelled' :
-            job.hasErred()    ? 'erred'     :
-                                'running';
-
-        const progress = job.progress();
-
         res.send({
-            id: postId,
-            progress: progress,
-            status: status
+            id: jobId,
+            progress: job.progress,
+            status: job.status
         });
     } else {
         res.status(404).send("Not found");
@@ -35,12 +27,12 @@ function getJob (req, res) {
 }
 
 function cancelJob (req, res) {
-    postId = req.params.id;
-    const job = this.getJob(postId);
+    const jobId = req.params.id;
+    const job = this.getJob(jobId);
 
     if (job !== undefined) {
-        this.cancelJob(postId);
-        res.send(job.isCancelled());
+        this.cancelJob(jobId);
+        res.send(job.status);
     } else {
         res.status(404).send("Not found");
     }
