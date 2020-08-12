@@ -108,7 +108,8 @@ const uuid  = require('uuid');
                 params: {
                     _ajax_nonce: nonce,
                     action: action,
-                    size: size
+                    size: size,
+                    id: jobId
                 }
             });
 
